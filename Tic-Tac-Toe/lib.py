@@ -1,0 +1,2 @@
+PLAYER_1_MARK = "S"
+PLAYER_2_MARK = "L"
