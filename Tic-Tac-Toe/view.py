@@ -59,24 +59,47 @@ class GuiView(View):
         super().__init__(controller)
         self.window = tk.Tk()
         self.window.title("Tic-Tac-Toe")
+        self.window.geometry("400x400")
         self.window.columnconfigure(0, weight=1)
         self.window.rowconfigure(0, weight=1)
 
-        self.game_frame = tk.Frame(master=self.window, width=400, height=400, background="red")
-        self.game_frame.grid(row=0, column=0)
+        self.game_frame = tk.Frame(master=self.window, height=400, width=400, background="red")
+        self.game_frame.columnconfigure(0, weight=1)
+        self.game_frame.rowconfigure(0, weight=1)
 
+        self.connect_frame = tk.Frame(master=self.window, height=400, width=400, background="blue")
+        self.connect_frame.columnconfigure(0, weight=1)
+        self.connect_frame.rowconfigure(0, weight=1)
+        self.connect_frame.grid(row=0, column=0)
+
+        self.name_label = tk.Label(master=self.connect_frame, text="Name:")
+        self.name_label.grid(row=0, column=0)
+        self.name_entry = tk.Entry(master=self.connect_frame)
+        self.name_entry.grid(row=0, column=1)
+        self.ip_label = tk.Label(master=self.connect_frame, text="IP-Adresse:")
+        self.ip_label.grid(row=1, column=0)
+        self.ip_entry = tk.Entry(master=self.connect_frame)
+        self.ip_entry.grid(row=1, column=1)
+        self.connect_button = tk.Button(master=self.connect_frame, text="Verbinden", command=self.connect)
+        self.connect_button.grid(row=2, column=0, columnspan=2)
         self.label = tk.Label(master=self.window, text="Game not started.")
         self.label.grid(row=1, column=0, sticky=tk.EW, ipady=10)
+
+        self.waiting_frame = tk.Frame(master=self.window, height=400, width=400, background="yellow")
+        self.waiting_frame.columnconfigure(0, weight=1)
+        self.waiting_frame.rowconfigure(0, weight=1)
 
         self.questionMarkPhoto = tk.PhotoImage(file="question_mark.png")
         self.spiderPhoto = tk.PhotoImage(file="spider.png")
         self.ladyBugPhoto = tk.PhotoImage(file="ladybug.png")
 
-    def ask_for_player_information(self):
-        name = dialog.askstring("Player Information", "Name?")
-        self.controller.start_game(name)
+    def connect(self):
+        name = self.name_entry.get()
+        ip = self.ip_entry.get()
+        self.controller.connect(name, ip)
 
     def show_board(self):
+        self.game_frame.grid(row=0, column=0)
         for field_index in range(9):
             button = tk.Button(master=self.game_frame, image=self.questionMarkPhoto)
             button.configure(command=lambda x=field_index + 1: self.controller.sendFieldNumber(x))
@@ -98,8 +121,12 @@ class GuiView(View):
     def show_turn_instruction(self):
         self.label.configure(text=f"It is your turn!")
 
-    def show_waiting_instruction(self):
-        self.label.configure(text=f"Please wait, other player is playing.")
+    def show_waiting(self):
+        self.connect_frame.destroy()
+        self.waiting_frame.grid(row=0, column=0)
+        label = tk.Label(master=self.waiting_frame, text="Waiting for other player...")
+        label.grid(row=0, column=0)
+        self.window.update()
 
     @staticmethod
     def show_input_error():
@@ -123,3 +150,7 @@ class GuiView(View):
 
     def start(self):
         self.window.mainloop()
+
+
+if __name__ == "__main__":
+    GuiView(None).start()

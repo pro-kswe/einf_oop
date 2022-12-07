@@ -1,5 +1,7 @@
 from view import GuiView
+from game_sever import GameServer
 import lib
+import socket
 
 
 class Controller:
@@ -8,20 +10,23 @@ class Controller:
         self.socket = None
         self.mark = None
 
-    def start(self, socket):
-        self.socket = socket
-        self.view.ask_for_player_information()
+    def start(self):
+        self.view.start()
 
-    def start_game(self, name):
+    def connect(self, name, ip):
+        self.socket = socket.socket()
+        self.socket.connect((ip, GameServer.PORT))
         self.mark = self.socket.recv(4096).decode()
         print(f"{self.mark} received")
         self.socket.send(name.encode())
-        print("Waiting for another player...")
+        self.view.show_waiting()
         name = self.socket.recv(4096).decode()
         print(f"{name} joined")
+
+    def start_game(self, name):
+        print("Waiting for another player...")
         self.view.show_board()
         self.handle_next_instruction()
-        self.view.start()
 
     def handle_next_instruction(self):
         instruction = self.socket.recv(4096).decode()
