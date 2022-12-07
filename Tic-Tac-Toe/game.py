@@ -28,3 +28,6 @@ class Game:
         self.board.determine_winner()
         if self.board.has_winner() or self.board.is_draw():
             self.is_finished = True
+
+    def get_winner_name(self):
+        return self.board.winner.name

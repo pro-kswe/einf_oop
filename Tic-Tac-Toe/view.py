@@ -82,8 +82,8 @@ class GuiView(View):
         self.ip_entry.grid(row=1, column=1)
         self.connect_button = tk.Button(master=self.connect_frame, text="Verbinden", command=self.connect)
         self.connect_button.grid(row=2, column=0, columnspan=2)
-        self.label = tk.Label(master=self.window, text="Game not started.")
-        self.label.grid(row=1, column=0, sticky=tk.EW, ipady=10)
+        self.status_label = tk.Label(master=self.window, text="Game not started.")
+        self.status_label.grid(row=1, column=0, sticky=tk.EW, ipady=10)
 
         self.waiting_frame = tk.Frame(master=self.window, height=400, width=400, background="yellow")
         self.waiting_frame.columnconfigure(0, weight=1)
@@ -96,15 +96,21 @@ class GuiView(View):
     def connect(self):
         name = self.name_entry.get()
         ip = self.ip_entry.get()
+        if len(ip) == 0:
+            ip = "127.0.0.1"
+        self.window.title(f"Tic-Tac-Toe: {name}")
         self.controller.connect(name, ip)
 
     def show_board(self):
+        self.waiting_frame.destroy()
+        self.status_label.configure(text="Waiting...")
         self.game_frame.grid(row=0, column=0)
         for field_index in range(9):
             button = tk.Button(master=self.game_frame, image=self.questionMarkPhoto)
-            button.configure(command=lambda x=field_index + 1: self.controller.sendFieldNumber(x))
+            button.configure(command=lambda x=field_index + 1: self.controller.send_field_number(x))
             button.configure(width=100, height=100)
             button.grid(row=field_index // 3, column=field_index % 3)
+        self.window.update()
 
     def update_board(self, field_number, mark):
         field_index = field_number - 1
@@ -116,10 +122,23 @@ class GuiView(View):
         selected_button.configure(image=photo)
         selected_button.configure(state=tk.DISABLED)
         self.window.update()
-        self.controller.handle_next_instruction()
 
     def show_turn_instruction(self):
-        self.label.configure(text=f"It is your turn!")
+        self.status_label.configure(text=f"It is your turn!")
+
+    def wait_for_other_player(self, other_player_name):
+        self.status_label.configure(text=f"{other_player_name} is playing. Please wait.")
+        self.window.update()
+
+    def show_winner_text(self, winner_text):
+        self.status_label.configure(text=winner_text)
+        self.lock_buttons()
+        self.window.update()
+
+    def show_draw(self):
+        self.status_label.configure(text="Draw!")
+        self.lock_buttons()
+        self.window.update()
 
     def show_waiting(self):
         self.connect_frame.destroy()
@@ -131,16 +150,6 @@ class GuiView(View):
     @staticmethod
     def show_input_error():
         messagebox.showerror("Input Error", "Not a valid move. Try again.")
-
-    def show_winner(self, player):
-        msg = f"{player.name} wins."
-        self.label.configure(text=msg)
-        messagebox.showinfo("Game Finished", msg)
-
-    def show_draw(self):
-        msg = "Draw!"
-        self.label.configure(text=msg)
-        messagebox.showinfo("Game Finished", msg)
 
     def lock_buttons(self):
         for field_index in range(9):
